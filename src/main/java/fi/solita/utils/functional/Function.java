@@ -7,13 +7,13 @@ public abstract class Function {
     }
 
     public static enum GivenLater {
-        _
-    }
-    public static enum GivenEvenLater {
         __
     }
-    public static final GivenLater _ = GivenLater._;
-    public static final GivenEvenLater __ = GivenEvenLater.__;
+    public static enum GivenEvenLater {
+        ___
+    }
+    public static final GivenLater __ = GivenLater.__;
+    public static final GivenEvenLater ___ = GivenEvenLater.___;
     
     public static final <R> Function0<R> of(final R r) {
         return new Function0<R>() {
@@ -33,13 +33,22 @@ public abstract class Function {
         };
     }
     
-    public static final <R> Function0<R> memoize(final Function0<R> apply) {
+    public static final <T1, T2, R> Function2<T1, T2, R> of(final ApplyBi<T1, T2, R> apply) {
+        return new Function2<T1, T2, R>() {
+            @Override
+            public final R apply(T1 t1, T2 t2) {
+                return apply.apply(t1, t2);
+            }
+        };
+    }
+    
+    public static final <R> Function0<R> memoize(final ApplyZero<R> supplier) {
         return new Function0<R>() {
             private R r;
             @Override
             public final R apply() {
                 if (r == null) {
-                    r = apply.apply();
+                    r = supplier.get();
                 }
                 return r;
             }
@@ -123,7 +132,7 @@ class PartialApplicationHelper {
         Object[] ret = Arrays.copyOf(paramsAndPlaceholders, paramsAndPlaceholders.length);
         int t = 0;
         for (int i = 0; i < ret.length; ++i) {
-            if (ret[i] == Function._) {
+            if (ret[i] == Function.__) {
                 ret[i] = actualParamsForPlaceholders[t];
                 t++;
                 if (t == actualParamsForPlaceholders.length) {
@@ -143,7 +152,7 @@ class PartialApplicationHelper {
         int ti = 0;
         int pi = 0;
         for (int i = 0; i < ret.length; ++i) {
-            if (args[i] == Function._) {
+            if (args[i] == Function.__) {
                 ret[i] = t[ti];
                 ti++;
             } else {
@@ -306,6 +315,48 @@ class PartialApplicationHelper {
                 @Override
                 public final R apply(Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8, Object p9, Object p10, Object p11, Object p12, Object p13, Object p14, Object p15, Object p16, Object p17, Object p18, Object p19, Object p20, Object p21, Object p22, Object p23, Object p24, Object p25) {
                     return ff.apply(replacePlaceholders(args, t, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25));
+                }
+            };
+            case 26: return (FR) new Function26<Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,R>() {
+                @Override
+                public final R apply(Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8, Object p9, Object p10, Object p11, Object p12, Object p13, Object p14, Object p15, Object p16, Object p17, Object p18, Object p19, Object p20, Object p21, Object p22, Object p23, Object p24, Object p25, Object p26) {
+                    return ff.apply(replacePlaceholders(args, t, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26));
+                }
+            };
+            case 27: return (FR) new Function27<Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,R>() {
+                @Override
+                public final R apply(Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8, Object p9, Object p10, Object p11, Object p12, Object p13, Object p14, Object p15, Object p16, Object p17, Object p18, Object p19, Object p20, Object p21, Object p22, Object p23, Object p24, Object p25, Object p26, Object p27) {
+                    return ff.apply(replacePlaceholders(args, t, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27));
+                }
+            };
+            case 28: return (FR) new Function28<Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,R>() {
+                @Override
+                public final R apply(Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8, Object p9, Object p10, Object p11, Object p12, Object p13, Object p14, Object p15, Object p16, Object p17, Object p18, Object p19, Object p20, Object p21, Object p22, Object p23, Object p24, Object p25, Object p26, Object p27, Object p28) {
+                    return ff.apply(replacePlaceholders(args, t, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28));
+                }
+            };
+            case 29: return (FR) new Function29<Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,R>() {
+                @Override
+                public final R apply(Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8, Object p9, Object p10, Object p11, Object p12, Object p13, Object p14, Object p15, Object p16, Object p17, Object p18, Object p19, Object p20, Object p21, Object p22, Object p23, Object p24, Object p25, Object p26, Object p27, Object p28, Object p29) {
+                    return ff.apply(replacePlaceholders(args, t, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29));
+                }
+            };
+            case 30: return (FR) new Function30<Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,R>() {
+                @Override
+                public final R apply(Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8, Object p9, Object p10, Object p11, Object p12, Object p13, Object p14, Object p15, Object p16, Object p17, Object p18, Object p19, Object p20, Object p21, Object p22, Object p23, Object p24, Object p25, Object p26, Object p27, Object p28, Object p29, Object p30) {
+                    return ff.apply(replacePlaceholders(args, t, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30));
+                }
+            };
+            case 31: return (FR) new Function31<Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,R>() {
+                @Override
+                public final R apply(Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8, Object p9, Object p10, Object p11, Object p12, Object p13, Object p14, Object p15, Object p16, Object p17, Object p18, Object p19, Object p20, Object p21, Object p22, Object p23, Object p24, Object p25, Object p26, Object p27, Object p28, Object p29, Object p30, Object p31) {
+                    return ff.apply(replacePlaceholders(args, t, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31));
+                }
+            };
+            case 32: return (FR) new Function32<Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,Object,R>() {
+                @Override
+                public final R apply(Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8, Object p9, Object p10, Object p11, Object p12, Object p13, Object p14, Object p15, Object p16, Object p17, Object p18, Object p19, Object p20, Object p21, Object p22, Object p23, Object p24, Object p25, Object p26, Object p27, Object p28, Object p29, Object p30, Object p31, Object p32) {
+                    return ff.apply(replacePlaceholders(args, t, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31, p32));
                 }
             };
         }

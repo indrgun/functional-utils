@@ -4,6 +4,7 @@ import static fi.solita.utils.functional.Collections.it;
 import static fi.solita.utils.functional.Collections.newList;
 import static fi.solita.utils.functional.Option.None;
 import static fi.solita.utils.functional.Option.Some;
+import static fi.solita.utils.functional.Predicates.not;
 
 import java.util.Comparator;
 import java.util.List;
@@ -229,9 +230,31 @@ public abstract class FunctionalC extends FunctionalS {
         if (xs == null) {
             return null;
         }
-        Pair<CharSequence,CharSequence> span = span(predicate, (CharSequence)xs);
-        return Pair.of(span.left.toString(), span.right.toString());
+        for (int i = 0; i < xs.length(); ++i) {
+            if (!predicate.apply(xs.charAt(i))) {
+                return Pair.of(xs.substring(0, i), xs.substring(i));
+            }
+        }
+        return Pair.of(xs, "");
     }
+    
+    public static final Pair<CharSequence, CharSequence> partition(Apply<Character, Boolean> predicate, CharSequence xs) {
+        return Pair.of(filter(predicate, xs), filter(not(predicate), xs));
+    }
+    
+    public static final Pair<String, String> partition(Apply<Character, Boolean> predicate, String xs) {
+        return partition(predicate, (CharSequence)xs).bimap(Transformers.toString, Transformers.toString);
+    }
+    
+    
+    public static final <T> CharSequence every(int nth, CharSequence xs) {
+        return it(FunctionalImpl.every(nth, it(xs)));
+    }
+    
+    public static final <T> String every(int nth, String xs) {
+        return xs == null ? null : every(nth, (CharSequence)xs).toString();
+    }
+    
     
     
     
@@ -324,7 +347,7 @@ public abstract class FunctionalC extends FunctionalS {
         return FunctionalImpl.max(it(xs));
     }
     
-    public static final Iterable<Tuple2<Character, Character>> zip(CharSequence a, CharSequence b) {
+    public static final Iterable<Pair<Character, Character>> zip(CharSequence a, CharSequence b) {
         return FunctionalImpl.zip(it(a), it(b));
     }
     
@@ -332,7 +355,11 @@ public abstract class FunctionalC extends FunctionalS {
         return FunctionalImpl.zip(it(a), it(b), it(c)); 
     }
     
-    public static final Iterable<Tuple2<Integer, Character>> zipWithIndex(CharSequence a) {
+    public static final Iterable<Tuple4<Character, Character, Character, Character>> zip(CharSequence a, CharSequence b, CharSequence c, CharSequence d) {
+        return FunctionalImpl.zip(it(a), it(b), it(c), it(d)); 
+    }
+    
+    public static final Iterable<Pair<Integer, Character>> zipWithIndex(CharSequence a) {
         return a == null ? null : new ZippingIterable<Integer,Character>(range(0), it(a));
     }
     

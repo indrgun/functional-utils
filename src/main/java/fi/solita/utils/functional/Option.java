@@ -16,10 +16,7 @@ public abstract class Option<T> implements Iterable<T>, Serializable {
     }
 
     public static final <T> Option<T> Some(T t) {
-        if (t == null) {
-            throw new IllegalArgumentException("Passed null to Some");
-        }
-        return of(t);
+        return new SomeImpl<T>(t);
     }
 
     @SuppressWarnings("unchecked")
@@ -35,8 +32,12 @@ public abstract class Option<T> implements Iterable<T>, Serializable {
     public abstract T getOrElse(T orElse);
     
     public abstract <R> Option<R> map(Apply<? super T, R> f);
+    
+    public abstract Option<T> filter(Apply<? super T, Boolean> f);
+    
+    public abstract <R> Option<R> flatMap(Apply<? super T, Option<R>> f);
 
-    public abstract <R> R cata(Apply<? super T, ? extends R> ifSome, Function0<? extends R> ifNone);
+    public abstract <R> R cata(Apply<? super T, ? extends R> ifSome, ApplyZero<? extends R> ifNone);
     
     public abstract <R> R fold(Apply<? super T, ? extends R> ifSome, R ifNone);
     
@@ -62,8 +63,18 @@ final class NoneImpl<T> extends Option<T> implements Serializable {
     }
     
     @Override
-    public final <R> R cata(Apply<? super T, ? extends R> ifSome, Function0<? extends R> ifNone) {
-        return ifNone.apply();
+    public Option<T> filter(Apply<? super T, Boolean> f) {
+        return this;
+    }
+    
+    @Override
+    public <R> Option<R> flatMap(Apply<? super T, Option<R>> f) {
+        return None();
+    }
+    
+    @Override
+    public final <R> R cata(Apply<? super T, ? extends R> ifSome, ApplyZero<? extends R> ifNone) {
+        return ifNone.get();
     }
     
     @Override
@@ -91,9 +102,6 @@ final class SomeImpl<T> extends Option<T> {
     protected final T t;
 
     SomeImpl(T t) {
-        if (t == null) {
-            throw new IllegalArgumentException("Passed null to Some");
-        }
         this.t = t;
     }
 
@@ -109,11 +117,21 @@ final class SomeImpl<T> extends Option<T> {
     
     @Override
     public final <R> Option<R> map(Apply<? super T, R> f) {
-        return Some(f.apply(t));
+        return Option.of(f.apply(t));
     }
     
     @Override
-    public final <R> R cata(Apply<? super T, ? extends R> ifSome, Function0<? extends R> ifNone) {
+    public Option<T> filter(Apply<? super T, Boolean> f) {
+        return f.apply(t) ? this : Option.<T>None();
+    }
+    
+    @Override
+    public <R> Option<R> flatMap(Apply<? super T, Option<R>> f) {
+        return f.apply(t);
+    }
+    
+    @Override
+    public final <R> R cata(Apply<? super T, ? extends R> ifSome, ApplyZero<? extends R> ifNone) {
         return ifSome.apply(t);
     }
     

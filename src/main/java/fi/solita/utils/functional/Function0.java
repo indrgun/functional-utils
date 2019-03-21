@@ -2,9 +2,13 @@ package fi.solita.utils.functional;
 
 import java.io.Serializable;
 
-public abstract class Function0<R> implements Apply<Tuple0,R>, Supplier<R>, Serializable {
+public abstract class Function0<R> implements Apply<Tuple0,R>, ApplyZero<R>, Serializable {
 
     public abstract R apply();
+    
+    public final R get() {
+        return apply();
+    }
     
     public final <U> Function0<U> andThen(final Apply<? super R, ? extends U> next) {
         return new Function0<U>() {

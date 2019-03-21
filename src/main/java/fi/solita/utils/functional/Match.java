@@ -114,9 +114,9 @@ public abstract class Match {
         boolean cont = !isEmpty(xs);
         while (cont) {
             Pair<CharSequence,CharSequence> p = span(predicate, xs);
-            parts.add(p.left.toString());
-            xs = drop(1, p.right);
-            cont = !isEmpty(xs) || !isEmpty(p.right);
+            parts.add(p.left().toString());
+            xs = drop(1, p.right());
+            cont = !isEmpty(xs) || !isEmpty(p.right());
         }
         return parts;
     }
@@ -202,7 +202,7 @@ public abstract class Match {
     private static final <T,R extends Tuple> Try<String,R> iterable(Iterable<T> ts, Object... expected) {
         Object[] actual = newArray(Object.class, ts);
         if (actual.length == expected.length) {
-            for (Tuple2<Integer, Tuple2<Object, Object>> t: zipWithIndex(zip(expected, actual))) {
+            for (Pair<Integer, Pair<Object, Object>> t: zipWithIndex(zip(expected, actual))) {
                 int i = t._1;
                 Tuple2<Object,Object> p = t._2;
                 if (p._1 != null && !p._1.equals(p._2)) {

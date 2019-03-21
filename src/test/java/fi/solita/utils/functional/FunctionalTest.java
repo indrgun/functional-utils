@@ -3,7 +3,7 @@ import static fi.solita.utils.functional.Collections.emptyList;
 import static fi.solita.utils.functional.Collections.newList;
 import static fi.solita.utils.functional.Collections.newSet;
 import static fi.solita.utils.functional.Functional.*;
-import static fi.solita.utils.functional.FunctionalC.group;
+import static fi.solita.utils.functional.Functional.group;
 import static fi.solita.utils.functional.FunctionalS.range;
 import static org.junit.Assert.*;
 
@@ -92,7 +92,7 @@ public class FunctionalTest {
     @Test
     public void testName() {
         @SuppressWarnings("unchecked")
-        Iterable<Tuple2<Integer, String>> a = flatMap(zipWithIndex, Arrays.asList(onceIterable));
+        Iterable<Pair<Integer, String>> a = flatMap(zipWithIndex, Arrays.asList(onceIterable));
         Iterable<Iterable<String>> b = map(new Transformer<Tuple2<Integer,String>,Iterable<String>>() {
             @Override
             public Iterable<String> transform(Tuple2<Integer,String> source) {
@@ -103,9 +103,9 @@ public class FunctionalTest {
         newList(c);
     }
     
-    public static final Function1<Iterable<String>, Iterable<Tuple2<Integer,String>>> zipWithIndex = new Function1<Iterable<String>, Iterable<Tuple2<Integer,String>>>() {
+    public static final Function1<Iterable<String>, Iterable<Pair<Integer,String>>> zipWithIndex = new Function1<Iterable<String>, Iterable<Pair<Integer,String>>>() {
         @Override
-        public Iterable<Tuple2<Integer, String>> apply(Iterable<String> t) {
+        public Iterable<Pair<Integer, String>> apply(Iterable<String> t) {
             return Functional.zipWithIndex(t);
         }
     };
@@ -252,8 +252,8 @@ public class FunctionalTest {
         assertEquals(newList(5), newList(dropWhile(Predicates.not(Predicates.equalTo(5)), newList(1,2,3,5))));
         
         Pair<Iterable<Integer>,Iterable<Integer>> pair = span(Predicates.not(Predicates.equalTo(5)), newList(1,2,3,5));
-        assertEquals(newList(1,2,3), newList(pair.left));
-        assertEquals(newList(5), newList(pair.right));
+        assertEquals(newList(1,2,3), newList(pair.left()));
+        assertEquals(newList(5), newList(pair.right()));
     }
     
     @Test
@@ -279,5 +279,28 @@ public class FunctionalTest {
     @Test
     public void testRangify5() {
         assertEquals(newList(newList(4,5),newList(1)), newList(rangify(Enumerables.ints, newList(4,5,1))));
+    }
+    
+    @Test
+    public void flattenIgnoresNulls() {
+        assertEquals(newList("foo"), newList(flatten(newList((List<String>)null, newList("foo")))));
+    }
+    
+    @Test
+    public void testForeach_apply() {
+        foreach(new Apply<Integer, Void>() {
+            public Void apply(Integer t) {
+                return null;
+            }
+        }, newList(42));
+    }
+    
+    @Test
+    public void testForeach_applyVoid() {
+        foreach(new ApplyVoid<Integer>() {
+            public void accept(Integer t) {
+                return;
+            }
+        }, newList(42));
     }
 }

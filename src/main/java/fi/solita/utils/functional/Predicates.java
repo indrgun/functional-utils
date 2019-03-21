@@ -57,13 +57,37 @@ public abstract class Predicates {
         return (Predicate<T>) Impl.isNull;
     }
     
-    public static final Predicate<Integer> even = new Predicate<Integer>() {
+    public static final Predicate<Option<?>> isDefined = new Predicate<Option<?>>() {
         @Override
-        public final boolean accept(Integer candidate) {
-            return candidate % 2 == 0;
+        public final boolean accept(Option<?> candidate) {
+            return candidate.isDefined();
         }
     };
     
+    public static final Predicate<Either<?,?>> isLeft = new Predicate<Either<?,?>>() {
+        @Override
+        public final boolean accept(Either<?,?> candidate) {
+            return candidate.isLeft();
+        }
+    };
+    
+    public static final Predicate<Either<?,?>> isRight = new Predicate<Either<?,?>>() {
+        @Override
+        public final boolean accept(Either<?,?> candidate) {
+            return candidate.isRight();
+        }
+    };
+    
+    public static final Predicate<Integer> divisible(final int by) {
+        return new Predicate<Integer>() {
+            @Override
+            public final boolean accept(Integer candidate) {
+                return candidate % by == 0;
+            }
+        };
+    }
+    
+    public static final Predicate<Integer> even = divisible(2);
     public static final Predicate<Integer> odd = not(even);
 
     public static final <T> Predicate<T> instanceOf(final Class<? extends T> c) {

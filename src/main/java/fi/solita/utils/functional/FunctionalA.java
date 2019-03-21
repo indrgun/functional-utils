@@ -3,7 +3,9 @@ package fi.solita.utils.functional;
 import static fi.solita.utils.functional.Collections.newList;
 import static fi.solita.utils.functional.Collections.newSet;
 import static fi.solita.utils.functional.Option.Some;
+import static fi.solita.utils.functional.Predicates.not;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -124,7 +126,7 @@ public abstract class FunctionalA extends FunctionalM {
     
     
     public static final <T> Iterable<List<T>> grouped(long groupSize, T[] xs) {
-        return FunctionalImpl.grouped(groupSize, newList(xs));
+        return FunctionalImpl.grouped(groupSize, Arrays.asList(xs));
     }
     
     
@@ -205,6 +207,24 @@ public abstract class FunctionalA extends FunctionalM {
     
     
     
+    public static final <T> Pair<Iterable<T>, Iterable<T>> span(Apply<? super T, Boolean> predicate, T[] xs) {
+        return FunctionalImpl.span(predicate, newList(xs));
+    }
+
+    
+    
+    public static final <T> Pair<Iterable<T>, Iterable<T>> partition(Apply<? super T, Boolean> predicate, T[] xs) {
+        return FunctionalImpl.partition(predicate, newList(xs));
+    }
+    
+    
+    
+    public static final <T> Iterable<T> every(int nth, T[] xs) {
+        return FunctionalImpl.every(nth, newList(xs));
+    }
+    
+    
+    
     public static final <T> boolean isEmpty(T[] xs) {
         return xs.length == 0;
     }
@@ -236,7 +256,7 @@ public abstract class FunctionalA extends FunctionalM {
     
     
     public static final <T> Iterable<T> cons(T x, T[] xs) {
-        return concat(newList(x), xs);
+        return FunctionalImpl.cons(x, newList(xs));
     }
     
     
@@ -254,23 +274,23 @@ public abstract class FunctionalA extends FunctionalM {
     }
 
     public static final <T> Iterable<T> concat(Iterable<? extends T> x1, Iterable<? extends T> x2, Iterable<? extends T> x3) {
-        return x1 == null || x2 == null || x3 == null ? null : new ConcatenatingIterable<T>(newList(x1, x2, x3));
+        return x1 == null && x2 == null && x3 == null ? null : new ConcatenatingIterable<T>(newList(x1, x2, x3));
     }
     
     public static final <T> Iterable<T> concat(Iterable<? extends T> x1, Iterable<? extends T> x2, Iterable<? extends T> x3, Iterable<? extends T> x4) {
-        return x1 == null || x2 == null || x3 == null || x4 == null ? null : new ConcatenatingIterable<T>(newList(x1, x2, x3, x4));
+        return x1 == null && x2 == null && x3 == null && x4 == null ? null : new ConcatenatingIterable<T>(newList(x1, x2, x3, x4));
     }
     
     public static final <T> Iterable<T> concat(Iterable<? extends T> x1, Iterable<? extends T> x2, Iterable<? extends T> x3, Iterable<? extends T> x4, Iterable<? extends T> x5) {
-        return x1 == null || x2 == null || x3 == null || x4 == null || x5 == null ? null : new ConcatenatingIterable<T>(newList(x1, x2, x3, x4, x5));
+        return x1 == null && x2 == null && x3 == null && x4 == null && x5 == null ? null : new ConcatenatingIterable<T>(newList(x1, x2, x3, x4, x5));
     }
     
     public static final <T> Iterable<T> concat(Iterable<? extends T> x1, Iterable<? extends T> x2, Iterable<? extends T> x3, Iterable<? extends T> x4, Iterable<? extends T> x5, Iterable<? extends T> x6) {
-        return x1 == null || x2 == null || x3 == null || x4 == null || x5 == null || x6 == null ? null : new ConcatenatingIterable<T>(newList(x1, x2, x3, x4, x5, x6));
+        return x1 == null && x2 == null && x3 == null && x4 == null && x5 == null && x6 == null ? null : new ConcatenatingIterable<T>(newList(x1, x2, x3, x4, x5, x6));
     }
     
     public static final <T> Iterable<T> concat(Iterable<? extends T> x1, Iterable<? extends T> x2, Iterable<? extends T> x3, Iterable<? extends T> x4, Iterable<? extends T> x5, Iterable<? extends T> x6, Iterable<? extends T>... xs) {
-        return x1 == null || x2 == null || x3 == null || x4 == null || x5 == null || x6 == null || xs == null ? null : new ConcatenatingIterable<T>(concat(newList(x1, x2, x3, x4, x5, x6), xs));
+        return x1 == null && x2 == null && x3 == null && x4 == null && x5 == null && x6 == null && xs == null ? null : new ConcatenatingIterable<T>(concat(newList(x1, x2, x3, x4, x5, x6), xs));
     }
     
     
@@ -332,6 +352,10 @@ public abstract class FunctionalA extends FunctionalM {
     
     
     
+    public static final <T extends Comparable<T>> T min(T x, T y) {
+        return x.compareTo(y) <= 0 ? x : y;
+    }
+    
     public static final <T extends Comparable<T>> T min(T x, T... xs) {
         return x == null || xs == null ? null : FunctionalImpl.min(cons(x, xs)).get();
     }
@@ -341,6 +365,10 @@ public abstract class FunctionalA extends FunctionalM {
     }
     
     
+    
+    public static final <T extends Comparable<T>> T max(T x, T y) {
+        return x.compareTo(y) >= 0 ? x : y;
+    }
     
     public static final <T extends Comparable<T>> T max(T x, T... xs) {
         return x == null || xs == null ? null : FunctionalImpl.max(cons(x, xs)).get();
@@ -352,15 +380,15 @@ public abstract class FunctionalA extends FunctionalM {
     
     
     
-    public static final <A,B> Iterable<Tuple2<A, B>> zip(A[] a, B[] b) {
+    public static final <A,B> Iterable<Pair<A, B>> zip(A[] a, B[] b) {
         return FunctionalImpl.zip(newList(a), newList(b));
     }
 
-    public static final <A,B> Iterable<Tuple2<A, B>> zip(A[] a, Iterable<B> b) {
+    public static final <A,B> Iterable<Pair<A, B>> zip(A[] a, Iterable<B> b) {
         return FunctionalImpl.zip(newList(a), b);
     }
 
-    public static final <A,B> Iterable<Tuple2<A, B>> zip(Iterable<A> a, B[] b) {
+    public static final <A,B> Iterable<Pair<A, B>> zip(Iterable<A> a, B[] b) {
         return FunctionalImpl.zip(a, newList(b));
     }
     
@@ -392,9 +420,41 @@ public abstract class FunctionalA extends FunctionalM {
         return FunctionalImpl.zip(newList(a), b, newList(c));
     }
     
+    public static final <A,B,C,D> Iterable<Tuple4<A, B, C, D>> zip(A[] a, B[] b, C[] c, D[] d) {
+        return FunctionalImpl.zip(newList(a), newList(b), newList(c), newList(d));
+    }
+    
+    public static final <A,B,C,D> Iterable<Tuple4<A, B, C, D>> zip(A[] a, Iterable<B> b, Iterable<C> c, Iterable<D> d) {
+        return FunctionalImpl.zip(newList(a), b, c, d);
+    }
+    
+    public static final <A,B,C,D> Iterable<Tuple4<A, B, C, D>> zip(Iterable<A> a, B[] b, Iterable<C> c, Iterable<D> d) {
+        return FunctionalImpl.zip(a, newList(b), c, d);
+    }
+    
+    public static final <A,B,C,D> Iterable<Tuple4<A, B, C, D>> zip(Iterable<A> a, Iterable<B> b, C[] c, Iterable<D> d) {
+        return FunctionalImpl.zip(a, b, newList(c), d);
+    }
+    
+    public static final <A,B,C,D> Iterable<Tuple4<A, B, C, D>> zip(Iterable<A> a, Iterable<B> b, Iterable<C> c, D[] d) {
+        return FunctionalImpl.zip(a, b, c, newList(d));
+    }
+    
+    public static final <A,B,C,D> Iterable<Tuple4<A, B, C, D>> zip(A[] a, B[] b, Iterable<C> c, Iterable<D> d) {
+        return FunctionalImpl.zip(newList(a), newList(b), c, d);
+    }
+    
+    public static final <A,B,C,D> Iterable<Tuple4<A, B, C, D>> zip(Iterable<A> a, B[] b, C[] c, Iterable<D> d) {
+        return FunctionalImpl.zip(a, newList(b), newList(c), d);
+    }
+    
+    public static final <A,B,C,D> Iterable<Tuple4<A, B, C, D>> zip(Iterable<A> a, Iterable<B> b, C[] c, D[] d) {
+        return FunctionalImpl.zip(a, b, newList(c), newList(d));
+    }
     
     
-    public static final <A> Iterable<Tuple2<Integer, A>> zipWithIndex(A[] a) {
+    
+    public static final <A> Iterable<Pair<Integer, A>> zipWithIndex(A[] a) {
         return a == null ? null : new ZippingIterable<Integer,A>(FunctionalImpl.range(Enumerables.ints, 0), newList(a));
     }
     

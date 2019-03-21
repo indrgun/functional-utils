@@ -161,4 +161,25 @@ public abstract class Compare {
     
     @SuppressWarnings("unchecked")
     public static final Ordering<Tuple._25<? extends Comparable<?>>> by_25 = (Ordering<Tuple._25<? extends Comparable<?>>>)(Object)by(Transformers.<Comparable<?>>_25());
+    
+    @SuppressWarnings("unchecked")
+    public static final Ordering<Tuple._26<? extends Comparable<?>>> by_26 = (Ordering<Tuple._26<? extends Comparable<?>>>)(Object)by(Transformers.<Comparable<?>>_26());
+    
+    @SuppressWarnings("unchecked")
+    public static final Ordering<Tuple._27<? extends Comparable<?>>> by_27 = (Ordering<Tuple._27<? extends Comparable<?>>>)(Object)by(Transformers.<Comparable<?>>_27());
+    
+    @SuppressWarnings("unchecked")
+    public static final Ordering<Tuple._28<? extends Comparable<?>>> by_28 = (Ordering<Tuple._28<? extends Comparable<?>>>)(Object)by(Transformers.<Comparable<?>>_28());
+    
+    @SuppressWarnings("unchecked")
+    public static final Ordering<Tuple._29<? extends Comparable<?>>> by_29 = (Ordering<Tuple._29<? extends Comparable<?>>>)(Object)by(Transformers.<Comparable<?>>_29());
+    
+    @SuppressWarnings("unchecked")
+    public static final Ordering<Tuple._30<? extends Comparable<?>>> by_30 = (Ordering<Tuple._30<? extends Comparable<?>>>)(Object)by(Transformers.<Comparable<?>>_30());
+    
+    @SuppressWarnings("unchecked")
+    public static final Ordering<Tuple._31<? extends Comparable<?>>> by_31 = (Ordering<Tuple._31<? extends Comparable<?>>>)(Object)by(Transformers.<Comparable<?>>_31());
+    
+    @SuppressWarnings("unchecked")
+    public static final Ordering<Tuple._32<? extends Comparable<?>>> by_32 = (Ordering<Tuple._32<? extends Comparable<?>>>)(Object)by(Transformers.<Comparable<?>>_32());
 }
