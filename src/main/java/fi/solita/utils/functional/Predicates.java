@@ -3,6 +3,7 @@ package fi.solita.utils.functional;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public abstract class Predicates {
@@ -15,10 +16,24 @@ public abstract class Predicates {
             }
         };
         
+        private static final Predicate<?> isNotNull = new Predicate<Object>() {
+            @Override
+            public final boolean accept(Object candidate) {
+                return candidate != null;
+            }
+        };
+        
         private static final Predicate<Iterable<?>> empty = new Predicate<Iterable<?>>() {
             @Override
             public final boolean accept(Iterable<?> candidate) {
                 return !candidate.iterator().hasNext();
+            }
+        };
+        
+        private static final Predicate<Map<?,?>> mapEmpty = new Predicate<Map<?,?>>() {
+            @Override
+            public final boolean accept(Map<?,?> candidate) {
+                return candidate.isEmpty();
             }
         };
     }
@@ -57,13 +72,42 @@ public abstract class Predicates {
         return (Predicate<T>) Impl.isNull;
     }
     
-    public static final Predicate<Integer> even = new Predicate<Integer>() {
+    @SuppressWarnings("unchecked")
+    public static final <T> Predicate<T> isNotNull() {
+        return (Predicate<T>) Impl.isNotNull;
+    }
+    
+    public static final Predicate<Option<?>> isDefined = new Predicate<Option<?>>() {
         @Override
-        public final boolean accept(Integer candidate) {
-            return candidate % 2 == 0;
+        public final boolean accept(Option<?> candidate) {
+            return candidate.isDefined();
         }
     };
     
+    public static final Predicate<Either<?,?>> isLeft = new Predicate<Either<?,?>>() {
+        @Override
+        public final boolean accept(Either<?,?> candidate) {
+            return candidate.isLeft();
+        }
+    };
+    
+    public static final Predicate<Either<?,?>> isRight = new Predicate<Either<?,?>>() {
+        @Override
+        public final boolean accept(Either<?,?> candidate) {
+            return candidate.isRight();
+        }
+    };
+    
+    public static final Predicate<Integer> divisible(final int by) {
+        return new Predicate<Integer>() {
+            @Override
+            public final boolean accept(Integer candidate) {
+                return candidate % by == 0;
+            }
+        };
+    }
+    
+    public static final Predicate<Integer> even = divisible(2);
     public static final Predicate<Integer> odd = not(even);
 
     public static final <T> Predicate<T> instanceOf(final Class<? extends T> c) {
@@ -78,6 +122,11 @@ public abstract class Predicates {
     @SuppressWarnings("unchecked")
     public static final <E, T extends Iterable<E>> Predicate<T> empty() {
         return (Predicate<T>) Impl.empty;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static final <K, V, M extends Map<K,V>> Predicate<M> mapEmpty() {
+        return (Predicate<M>) Impl.mapEmpty;
     }
     
     public static final <T extends Comparable<T>> Predicate<T> greaterThan(final T value) {
@@ -118,9 +167,11 @@ public abstract class Predicates {
     
     public static final <T extends Comparable<T>> Predicate<T> between(final T beginInclusive, final T endInclusive) {
         return new Predicate<T>() {
+            Predicate<T> pred = greaterThanOrEqualTo(beginInclusive).and(lessThanOrEqualTo(endInclusive));
+            
             @Override
             public final boolean accept(T candidate) {
-                return greaterThanOrEqualTo(beginInclusive).and(lessThanOrEqualTo(endInclusive)).accept(candidate);
+                return pred.accept(candidate);
             }
         };
     }

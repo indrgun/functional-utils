@@ -3,6 +3,9 @@ import static fi.solita.utils.functional.Collections.it;
 import static fi.solita.utils.functional.Collections.newArray;
 import static fi.solita.utils.functional.Collections.newList;
 import static fi.solita.utils.functional.Collections.newMap;
+import static fi.solita.utils.functional.Collections.newMutableList;
+import static fi.solita.utils.functional.Collections.newMutableMap;
+import static fi.solita.utils.functional.Collections.newMutableSet;
 import static fi.solita.utils.functional.Collections.newSet;
 
 import java.util.List;
@@ -16,9 +19,9 @@ public class CollectionsExamples {
     @SuppressWarnings("unused")
     @Test
     public void examples() {
-        List<Integer> emptyList = newList();
-        Set<String> emptySet = newSet();
-        Map<Long, Integer> emptyMap = newMap();
+        List<Integer> emptyList = newMutableList();
+        Set<String> emptySet = newMutableSet();
+        Map<Long, Integer> emptyMap = newMutableMap();
         
         int[] primitiveArray = new int[]{1, 2, 3};
         List<Integer> listFromPrimitives = newList(primitiveArray);
@@ -29,7 +32,7 @@ public class CollectionsExamples {
         Set<Integer> setFromIterable = newSet(iterable);
         
         List<? extends Map.Entry<String, Integer>> entries = newList(Pair.of("foo", 1), Pair.of("bar", 2));
-        Map<String, Integer> mapFromIterableEntries = newMap(entries);
+        Map<String, Integer> mapFromIterableEntries = newMap(SemiGroups.<Integer>fail(), entries);
         Map<String, Integer> mapFromEntries = newMap(Pair.of("foo", 1), Pair.of("bar", 2));
         
         Character[] arrayFromPrimitives = newArray('a', 'b', 'c');

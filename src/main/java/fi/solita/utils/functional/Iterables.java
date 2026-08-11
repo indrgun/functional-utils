@@ -1,8 +1,11 @@
 package fi.solita.utils.functional;
 
 import static fi.solita.utils.functional.Collections.newList;
-import static fi.solita.utils.functional.Collections.newListOfSize;
+import static fi.solita.utils.functional.Collections.newMutableList;
+import static fi.solita.utils.functional.Collections.newMutableListOfSize;
+import static fi.solita.utils.functional.Collections.newMutableSet;
 import static fi.solita.utils.functional.Functional.drop;
+import static fi.solita.utils.functional.Functional.filter;
 import static fi.solita.utils.functional.Functional.forall;
 import static fi.solita.utils.functional.Functional.isEmpty;
 import static fi.solita.utils.functional.Functional.map;
@@ -12,15 +15,18 @@ import static fi.solita.utils.functional.FunctionalA.max;
 import static fi.solita.utils.functional.FunctionalA.min;
 import static fi.solita.utils.functional.Option.None;
 import static fi.solita.utils.functional.Option.Some;
+import static fi.solita.utils.functional.Predicates.isNotNull;
+import static fi.solita.utils.functional.Predicates.isNull;
+import static fi.solita.utils.functional.Predicates.not;
 
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.PriorityQueue;
+import java.util.Set;
 
 public abstract class Iterables {
     // cache most used Some-object to reduce object allocation
@@ -103,7 +109,7 @@ public abstract class Iterables {
         }
         
         public RangeIterable(Enumerable<T> enumeration, T from, T toInclusive, long knownSize) {
-            this(enumeration, from, Some(toInclusive), Some(knownSize));
+            this(enumeration, from, Some(toInclusive), wrapSome(knownSize));
         }
 
         private RangeIterable(Enumerable<T> enumeration, T from, Option<T> toInclusive, Option<Long> knownSize) {
@@ -240,7 +246,7 @@ public abstract class Iterables {
         }
     }
 
-    static final class ZippingIterable<A,B> extends MyIterable<Tuple2<A, B>> implements ForceableIterable {
+    static final class ZippingIterable<A,B> extends MyIterable<Pair<A, B>> implements ForceableIterable {
         private final Iterable<A> elements1;
         private final Iterable<B> elements2;
         private boolean force = false;
@@ -254,7 +260,7 @@ public abstract class Iterables {
             this.force = true;
         }
         
-        public final Iterator<Tuple2<A, B>> iterator() {
+        public final Iterator<Pair<A, B>> iterator() {
             if (force) {
                 if (elements1 instanceof ForceableIterable) {
                     ((ForceableIterable)elements1).completeIterationNeeded();
@@ -263,7 +269,7 @@ public abstract class Iterables {
                     ((ForceableIterable)elements2).completeIterationNeeded();
                 }
             }
-            return new Iterator<Tuple2<A, B>>() {
+            return new Iterator<Pair<A, B>>() {
                 private final Iterator<A> it1 = elements1.iterator();
                 private final Iterator<B> it2 = elements2.iterator();
                 
@@ -273,8 +279,8 @@ public abstract class Iterables {
                 }
 
                 
-                public final Tuple2<A, B> next() {
-                    return Tuple.of(it1.next(), it2.next());
+                public final Pair<A, B> next() {
+                    return Pair.of(it1.next(), it2.next());
                 }
 
                 
@@ -300,7 +306,9 @@ public abstract class Iterables {
         private boolean force = false;
 
         public ConcatenatingIterable(Iterable<? extends Iterable<? extends T>> elements) {
-            if (elements instanceof Collection) {
+            if (elements == null) {
+                throw new IllegalArgumentException();
+            } else if (elements instanceof Collection) {
                 this.elements = flattenNestedConcats((Collection<? extends Iterable<? extends T>>)elements);
             } else {
                 this.elements = elements;
@@ -313,7 +321,7 @@ public abstract class Iterables {
         
         @SuppressWarnings("unchecked")
         private final Collection<? extends Iterable<? extends T>> flattenNestedConcats(Collection<? extends Iterable<? extends T>> elements) {
-            List<Iterable<? extends T>> ret = newList();
+            List<Iterable<? extends T>> ret = newMutableList();
             for (Iterable<? extends T> es: elements) {
                 if (es instanceof ConcatenatingIterable && ((ConcatenatingIterable<T>) es).elements instanceof Collection) {
                     ret.addAll(flattenNestedConcats((Collection<? extends Iterable<? extends T>>)((ConcatenatingIterable<T>)es).elements));
@@ -368,12 +376,75 @@ public abstract class Iterables {
     
     static final class FlatteningIterable<T> extends ConcatenatingIterable<T> {
         public FlatteningIterable(Iterable<? extends Iterable<? extends T>> elements) {
-            super(elements);
+            super(filter(isNotNull(), elements));
         }
         
         
         public Option<Long> size() {
             return None();
+        }
+    }
+    
+    static class DistinctIterable<T> extends MyIterable<T> implements ForceableIterable {
+        private final Iterable<T> iterable;
+        private boolean force = false;
+
+        public DistinctIterable(Iterable<T> iterable) {
+            this.iterable = iterable;
+        }
+        
+        public final void completeIterationNeeded() {
+            this.force = true;
+        }
+        
+        public final Option<Long> size() {
+            return None();
+        }
+        
+        public Iterator<T> iterator() {
+            final Set<T> visited = newMutableSet();
+            if (force && iterable instanceof ForceableIterable) {
+                ((ForceableIterable)iterable).completeIterationNeeded();
+            }
+            return new Iterator<T>() {
+                private boolean hasNext;
+                private T next;
+                private final Iterator<T> source = iterable.iterator();
+                {
+                    readNext();
+                }
+
+                
+                public final boolean hasNext() {
+                    return hasNext;
+                }
+
+                private final void readNext() {
+                    hasNext = false;
+                    while (!hasNext && source.hasNext()) {
+                        T n = source.next();
+                        if (visited.add(n)) {
+                            next = n;
+                            hasNext = true;
+                        }
+                    }
+                }
+
+                
+                public final T next() {
+                    if (!hasNext) {
+                        throw new NoSuchElementException();
+                    }
+                    T ret = (T) next;
+                    readNext();
+                    return ret;
+                }
+
+                
+                public final void remove() {
+                    throw new UnsupportedOperationException();
+                }
+            };
         }
     }
 
@@ -448,6 +519,9 @@ public abstract class Iterables {
         private boolean force = false;
 
         public TransformingIterable(Iterable<S> iterable, Apply<? super S, ? extends T> transformer) {
+            if (iterable == null || transformer == null) {
+                throw new IllegalArgumentException();
+            }
             this.iterable = iterable;
             this.transformer = transformer;
         }
@@ -557,11 +631,15 @@ public abstract class Iterables {
                 private int read = 0;
                 
                 public final boolean hasNext() {
-                    try {
-                        chars.charAt(read);
-                        return true;
-                    } catch (IndexOutOfBoundsException e) {
-                        return false;
+                    if (chars instanceof Iterable<?>) {
+                        try {
+                            chars.charAt(read);
+                            return true;
+                        } catch (IndexOutOfBoundsException e) {
+                            return false;
+                        }
+                    } else {
+                        return read < chars.length();
                     }
                 }
 
@@ -730,10 +808,10 @@ public abstract class Iterables {
             if (force) {
                 List<T> sorted = null;
                 for (long size: Iterables.resolveSize.apply(iterable)) {
-                    sorted = newListOfSize(size);
+                    sorted = newMutableListOfSize(size);
                 }
                 if (sorted == null) {
-                    sorted = newList();
+                    sorted = newMutableList();
                 }
 
                 if (iterable instanceof Collection) {
@@ -879,10 +957,10 @@ public abstract class Iterables {
     
     static final class GroupingIterable<T> extends MyIterable<Iterable<T>> implements ForceableIterable {
         private final Iterable<T> elements;
-        private final Apply<Map.Entry<T,T>, Boolean> comparator;
+        private final ApplyBi<T,T,Boolean> comparator;
         private boolean force = false;
 
-        public GroupingIterable(Iterable<T> elements, Apply<Map.Entry<T,T>, Boolean> comparator) {
+        public GroupingIterable(Iterable<T> elements, ApplyBi<T,T,Boolean> comparator) {
             this.elements = elements;
             this.comparator = comparator;
         }
@@ -921,7 +999,7 @@ public abstract class Iterables {
                                 prev[0] = candidate;
                                 return true;
                             }
-                            boolean ret = comparator.apply(Tuple.of((T)prev[0], candidate));
+                            boolean ret = comparator.apply((T)prev[0], candidate);
                             prev[0] = candidate;
                             return ret;
                         }

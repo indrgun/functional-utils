@@ -2,7 +2,9 @@ package fi.solita.utils.functional;
 
 import static fi.solita.utils.functional.Collections.newArray;
 import static fi.solita.utils.functional.Collections.newList;
-import static fi.solita.utils.functional.Collections.newListOfSize;
+import static fi.solita.utils.functional.Collections.newMutableList;
+import static fi.solita.utils.functional.Collections.newMutableListOfSize;
+import static fi.solita.utils.functional.Functional.tail;
 import static fi.solita.utils.functional.Functional.zipWithIndex;
 import static fi.solita.utils.functional.FunctionalA.max;
 import static fi.solita.utils.functional.FunctionalA.zip;
@@ -17,6 +19,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Pattern matching.
+ */
 public abstract class Match {
     public static final Try<String,String> nonEmptyString(String obj) {
         if (obj == null || obj.trim().isEmpty()) {
@@ -61,6 +66,23 @@ public abstract class Match {
             return Try.success(Pair.of(take(prefixLength, xs).toString(), suffix));
         }
         return Try.failure(suffix + " is not a suffix of " + xs);
+    }
+    
+    /**
+     * Match a section, lazily.
+     * 
+     * For example:
+     * <br><code>Match.section('{', '}', " {a} {b}") == ( ,a, {b})</code>.
+     */
+    public static final Try<String,Tuple3<String,String,String>> section(char start, char end, CharSequence xs) {
+        Pair<CharSequence,CharSequence> parts1 = span(not(equalTo(start)), xs);
+        if (!isEmpty(parts1.right())) {
+            Pair<CharSequence,CharSequence> parts2 = span(not(equalTo(end)), tail(parts1.right()));
+            if (!isEmpty(parts2.right())) {
+                return Try.success(Tuple.of(parts1.left().toString(), parts2.left().toString(), tail(parts2.right()).toString()));
+            }
+        }
+        return Try.failure("Section between '" + start + "' and '" + end + "' not found in " + xs);
     }
     
     public static final Try<String,Tuple2<String,String>> tuple2(char separator, CharSequence xs) {
@@ -109,14 +131,14 @@ public abstract class Match {
 
     private static final List<String> split(char separator, CharSequence xs) {
         Predicate<Character> predicate = not(equalTo(separator));
-        List<String> parts = newList();
+        List<String> parts = newMutableList();
         
         boolean cont = !isEmpty(xs);
         while (cont) {
             Pair<CharSequence,CharSequence> p = span(predicate, xs);
-            parts.add(p.left.toString());
-            xs = drop(1, p.right);
-            cont = !isEmpty(xs) || !isEmpty(p.right);
+            parts.add(p.left().toString());
+            xs = drop(1, p.right());
+            cont = !isEmpty(xs) || !isEmpty(p.right());
         }
         return parts;
     }
@@ -124,7 +146,7 @@ public abstract class Match {
     public static final Try<String,List<String>> groups(Pattern regex, CharSequence xs) {
         Matcher matcher = regex.matcher(xs);
         if (matcher.matches()) {
-            List<String> groups = newListOfSize(max(0, matcher.groupCount() - 1));
+            List<String> groups = newMutableListOfSize(max(0, matcher.groupCount() - 1));
             for (int i = 1; i <= matcher.groupCount(); ++i) {
                 groups.add(matcher.group(i));
             }
@@ -202,7 +224,7 @@ public abstract class Match {
     private static final <T,R extends Tuple> Try<String,R> iterable(Iterable<T> ts, Object... expected) {
         Object[] actual = newArray(Object.class, ts);
         if (actual.length == expected.length) {
-            for (Tuple2<Integer, Tuple2<Object, Object>> t: zipWithIndex(zip(expected, actual))) {
+            for (Pair<Integer, Pair<Object, Object>> t: zipWithIndex(zip(expected, actual))) {
                 int i = t._1;
                 Tuple2<Object,Object> p = t._2;
                 if (p._1 != null && !p._1.equals(p._2)) {

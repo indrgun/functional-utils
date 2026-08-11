@@ -2,18 +2,40 @@ package fi.solita.utils.functional;
 
 import static fi.solita.utils.functional.Collections.it;
 import static fi.solita.utils.functional.Functional.filter;
+import static fi.solita.utils.functional.Option.Some;
 import static fi.solita.utils.functional.Predicates.not;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public abstract class Transformers {
     
-    public static final Transformer<String, String> append(final String suffix) { 
-        return new Transformer<String, String>() {
+    public static final Transformer<CharSequence, String> append(final CharSequence suffix) { 
+        return new Transformer<CharSequence, String>() {
             @Override
-            public final String transform(String source) {
-                return source == null ? null : source + suffix;
+            public final String transform(CharSequence source) {
+                return source == null ? null : source.toString() + suffix;
+            }
+        };
+    }
+    
+    public static final <A,B> Transformer<A, Pair<A,B>> append(final B suffix) { 
+        return new Transformer<A, Pair<A,B>>() {
+            @Override
+            public final Pair<A,B> transform(A source) {
+                return source == null ? null : Pair.of(source, suffix);
+            }
+        };
+    }
+    
+    public static final <A,B,C> Transformer<Map.Entry<A,B>, Tuple3<A,B,C>> appendPair(final C suffix) { 
+        return new Transformer<Map.Entry<A,B>, Tuple3<A,B,C>>() {
+            @Override
+            public final Tuple3<A,B,C> transform(Map.Entry<A,B> source) {
+                return source == null ? null : Tuple.of(source.getKey(), source.getValue(), suffix);
             }
         };
     }
@@ -23,6 +45,24 @@ public abstract class Transformers {
             @Override
             public final String transform(CharSequence source) {
                 return prefix + source.toString();
+            }
+        };
+    }
+    
+    public static final <A,B> Transformer<B, Pair<A,B>> prepend(final A prefix) { 
+        return new Transformer<B, Pair<A,B>>() {
+            @Override
+            public final Pair<A,B> transform(B source) {
+                return source == null ? null : Pair.of(prefix, source);
+            }
+        };
+    }
+    
+    public static final <A,B,C> Transformer<Map.Entry<B,C>, Tuple3<A,B,C>> prependPair(final A prefix) { 
+        return new Transformer<Map.Entry<B,C>, Tuple3<A,B,C>>() {
+            @Override
+            public final Tuple3<A,B,C> transform(Map.Entry<B,C> source) {
+                return source == null ? null : Tuple.of(prefix, source.getKey(), source.getValue());
             }
         };
     }
@@ -178,6 +218,24 @@ public abstract class Transformers {
     public static final <K,V> Transformer<Map.Entry<K,V>,V> value() {
         return (Transformer<Map.Entry<K,V>,V>)(Object)right;
     }
+
+    public static final <K,V,R> Transformer<Map.Entry<K,V>,Map.Entry<R,V>> first(final Apply<K,R> f) {
+        return new Transformer<Map.Entry<K,V>,Map.Entry<R,V>>() {
+            @Override
+            public final Map.Entry<R,V> transform(Map.Entry<K,V> source) {
+                return Pair.of(f.apply(source.getKey()), source.getValue());
+            }
+        };
+    }
+    
+    public static final <K,V,R> Transformer<Map.Entry<K,V>,Map.Entry<K,R>> second(final Apply<V,R> f) {
+        return new Transformer<Map.Entry<K,V>,Map.Entry<K,R>>() {
+            @Override
+            public final Map.Entry<K,R> transform(Map.Entry<K,V> source) {
+                return Pair.of(source.getKey(), f.apply(source.getValue()));
+            }
+        };
+    }
     
     private static final Transformer<Either<?,?>,Option<?>> eitherLeft = new Transformer<Either<?,?>,Option<?>>() {
         @Override
@@ -185,20 +243,77 @@ public abstract class Transformers {
             return source.left;
         }
     };
-    @SuppressWarnings("unchecked")
-    public static final <T> Transformer<Either<T,?>,Option<T>> eitherLeft() {
-        return (Transformer<Either<T,?>,Option<T>>)(Object)eitherLeft;
-    }
-    
     private static final Transformer<Either<?,?>,Option<?>> eitherRight = new Transformer<Either<?,?>,Option<?>>() {
         @Override
         public final Option<?> transform(Either<?,?> source) {
             return source.right;
         }
     };
+    
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Either<T,?>,Option<T>> eitherLeft() {
+        return (Transformer<Either<T,?>,Option<T>>)(Object)eitherLeft;
+    }
+    
     @SuppressWarnings("unchecked")
     public static final <T> Transformer<Either<?,T>,Option<T>> eitherRight() {
         return (Transformer<Either<?,T>,Option<T>>)(Object)eitherRight;
+    }
+    
+    private static final Transformer<Either3<?,?,?>,Option<?>> either3Left = new Transformer<Either3<?,?,?>,Option<?>>() {
+        @Override
+        public final Option<?> transform(Either3<?,?,?> source) {
+            return source.left;
+        }
+    };
+    private static final Transformer<Either3<?,?,?>,Option<?>> either3Middle = new Transformer<Either3<?,?,?>,Option<?>>() {
+        @Override
+        public final Option<?> transform(Either3<?,?,?> source) {
+            return source.middle;
+        }
+    };
+    private static final Transformer<Either3<?,?,?>,Option<?>> either3Right = new Transformer<Either3<?,?,?>,Option<?>>() {
+        @Override
+        public final Option<?> transform(Either3<?,?,?> source) {
+            return source.right;
+        }
+    };
+    
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Either3<T,?,?>,Option<T>> either3Left() {
+        return (Transformer<Either3<T,?,?>,Option<T>>)(Object)either3Left;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Either3<?,T,?>,Option<T>> either3Middle() {
+        return (Transformer<Either3<?,T,?>,Option<T>>)(Object)either3Middle;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Either3<?,?,T>,Option<T>> either3Right() {
+        return (Transformer<Either3<?,?,T>,Option<T>>)(Object)either3Right;
+    }
+    
+    private static final Transformer<Map<Object,Object>,Set<Map.Entry<Object,Object>>> mapEntrySet = new Transformer<Map<Object,Object>,Set<Map.Entry<Object,Object>>>() {
+        @Override
+        public final Set<Map.Entry<Object,Object>> transform(Map<Object,Object> source) {
+            return source.entrySet();
+        }
+    };
+    @SuppressWarnings("unchecked")
+    public static final <K,V> Transformer<Map<K,V>,Set<Map.Entry<K,V>>> mapEntrySet() {
+        return (Transformer<Map<K,V>,Set<Map.Entry<K,V>>>)(Object)mapEntrySet;
+    }
+    
+    private static final Transformer<?,Option<?>> some = new Transformer<Object,Option<?>>() {
+        @Override
+        public final Option<?> transform(Object source) {
+            return Some(source);
+        }
+    };
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<T,Option<T>> some() {
+        return (Transformer<T,Option<T>>)(Object)some;
     }
     
     private static final Transformer<Option<?>,?> get = new Transformer<Option<?>,Object>() {
@@ -239,6 +354,24 @@ public abstract class Transformers {
         return (Transformer<Iterable<T>,T>)(Object)head;
     }
     
+    private static final Transformer<Iterable<?>, Object> tail = new Transformer<Iterable<?>,Object>() {
+        @Override
+        public final Object transform(Iterable<?> source) {
+            return Functional.tail(source);
+        }
+    };
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Iterable<T>,Iterable<T>> tail() {
+        return (Transformer<Iterable<T>,Iterable<T>>)(Object)tail;
+    }
+    
+    public static final Transformer<String, String> tailStr = new Transformer<String,String>() {
+        @Override
+        public final String transform(String source) {
+            return Functional.tail(source);
+        }
+    };
+    
     public static final <T,R> Transformer<Iterable<? extends T>,Iterable<R>> map(final Apply<? super T, R> f) {
         return new Transformer<Iterable<? extends T>,Iterable<R>>() {
             @Override
@@ -265,6 +398,48 @@ public abstract class Transformers {
             }
         };
     }
+    
+    public static final <R,T extends Iterable<R>> Transformer<Iterable<? extends T>,Iterable<R>> flatten() {
+        return new Transformer<Iterable<? extends T>,Iterable<R>>() {
+            @Override
+            public final Iterable<R> transform(Iterable<? extends T> source) {
+                return Functional.flatten(source);
+            }
+        };
+    }
+    
+    private static final Transformer<Object, List<Object>> newList = new Transformer<Object,List<Object>>() {
+        @Override
+        public final List<Object> transform(Object source) {
+            return Collections.newList(source);
+        }
+    };
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<T,List<T>> newList() {
+        return (Transformer<T,List<T>>)(Object)newList;
+    }
+    
+    private static final Transformer<Object, Set<Object>> newSet = new Transformer<Object,Set<Object>>() {
+        @Override
+        public final Set<Object> transform(Object source) {
+            return Collections.newSet(source);
+        }
+    };
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<T,Set<T>> newSet() {
+        return (Transformer<T,Set<T>>)(Object)newSet;
+    }
+    
+    private static final Transformer<Tuple2<Object,Object>, Map<Object,Object>> newMap = new Transformer<Tuple2<Object,Object>,Map<Object,Object>>() {
+        @Override
+        public final Map<Object,Object> transform(Tuple2<Object,Object> source) {
+            return Collections.newMap(source);
+        }
+    };
+    @SuppressWarnings("unchecked")
+    public static final <K,V,T extends Tuple2<K,V>> Transformer<T,Map<K,V>> newMap() {
+        return (Transformer<T,Map<K,V>>)(Object)newMap;
+    }
    
     public static final Transformer<Iterable<?>, Long> size = new Transformer<Iterable<?>,Long>() {
         @Override
@@ -272,6 +447,42 @@ public abstract class Transformers {
             return Functional.size(source);
         }
     };
+    
+    public static <A,B,T extends Tuple._1<A> & Tuple._2<B>> Transformer<T,Tuple2<A,B>> take2() {
+        return new Transformer<T, Tuple2<A,B>>() {
+            @Override
+            public Tuple2<A, B> transform(T source) {
+                return Tuple.of(source.get_1(), source.get_2());
+            }
+        };
+    }
+    
+    public static <A,B,C,T extends Tuple._1<A> & Tuple._2<B> & Tuple._3<C>> Transformer<T,Tuple3<A,B,C>> take3() {
+        return new Transformer<T, Tuple3<A,B,C>>() {
+            @Override
+            public Tuple3<A, B, C> transform(T source) {
+                return Tuple.of(source.get_1(), source.get_2(), source.get_3());
+            }
+        };
+    }
+    
+    public static <A,B> Function2<Iterable<A>,B,Iterable<Pair<A,B>>> zipTo() {
+        return new Function2<Iterable<A>, B, Iterable<Pair<A,B>>>() {
+            @Override
+            public Iterable<Pair<A, B>> apply(Iterable<A> t1, B t2) {
+                return Functional.zipTo(t1, t2);
+            }
+        };
+    }
+    
+    public static <A,B,C> Function2<Iterable<? extends Map.Entry<A, B>>, C, Iterable<Tuple3<A, B, C>>> zipToPair() {
+        return new Function2<Iterable<? extends Map.Entry<A,B>>, C, Iterable<Tuple3<A,B,C>>>() {
+            @Override
+            public Iterable<Tuple3<A, B, C>> apply(Iterable<? extends Entry<A, B>> t1, C t2) {
+                return Functional.zipToPair(t1, t2);
+            }
+        };
+    }
     
     private static final Transformer<Tuple._1<?>,?> _1 = new Transformer<Tuple._1<?>,Object>() {
         @Override
@@ -423,6 +634,120 @@ public abstract class Transformers {
             return source.get_25();
         }
     };
+    private static final Transformer<Tuple._26<?>,?> _26 = new Transformer<Tuple._26<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._26<?> source) {
+            return source.get_26();
+        }
+    };
+    private static final Transformer<Tuple._27<?>,?> _27 = new Transformer<Tuple._27<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._27<?> source) {
+            return source.get_27();
+        }
+    };
+    private static final Transformer<Tuple._28<?>,?> _28 = new Transformer<Tuple._28<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._28<?> source) {
+            return source.get_28();
+        }
+    };
+    private static final Transformer<Tuple._29<?>,?> _29 = new Transformer<Tuple._29<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._29<?> source) {
+            return source.get_29();
+        }
+    };
+    private static final Transformer<Tuple._30<?>,?> _30 = new Transformer<Tuple._30<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._30<?> source) {
+            return source.get_30();
+        }
+    };
+    private static final Transformer<Tuple._31<?>,?> _31 = new Transformer<Tuple._31<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._31<?> source) {
+            return source.get_31();
+        }
+    };
+    private static final Transformer<Tuple._32<?>,?> _32 = new Transformer<Tuple._32<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._32<?> source) {
+            return source.get_32();
+        }
+    };
+    private static final Transformer<Tuple._33<?>,?> _33 = new Transformer<Tuple._33<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._33<?> source) {
+            return source.get_33();
+        }
+    };
+    private static final Transformer<Tuple._34<?>,?> _34 = new Transformer<Tuple._34<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._34<?> source) {
+            return source.get_34();
+        }
+    };
+    private static final Transformer<Tuple._35<?>,?> _35 = new Transformer<Tuple._35<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._35<?> source) {
+            return source.get_35();
+        }
+    };
+    private static final Transformer<Tuple._36<?>,?> _36 = new Transformer<Tuple._36<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._36<?> source) {
+            return source.get_36();
+        }
+    };
+    private static final Transformer<Tuple._37<?>,?> _37 = new Transformer<Tuple._37<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._37<?> source) {
+            return source.get_37();
+        }
+    };
+    private static final Transformer<Tuple._38<?>,?> _38 = new Transformer<Tuple._38<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._38<?> source) {
+            return source.get_38();
+        }
+    };
+    private static final Transformer<Tuple._39<?>,?> _39 = new Transformer<Tuple._39<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._39<?> source) {
+            return source.get_39();
+        }
+    };
+    private static final Transformer<Tuple._40<?>,?> _40 = new Transformer<Tuple._40<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._40<?> source) {
+            return source.get_40();
+        }
+    };
+    private static final Transformer<Tuple._41<?>,?> _41 = new Transformer<Tuple._41<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._41<?> source) {
+            return source.get_41();
+        }
+    };
+    private static final Transformer<Tuple._42<?>,?> _42 = new Transformer<Tuple._42<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._42<?> source) {
+            return source.get_42();
+        }
+    };
+    private static final Transformer<Tuple._43<?>,?> _43 = new Transformer<Tuple._43<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._43<?> source) {
+            return source.get_43();
+        }
+    };
+    private static final Transformer<Tuple._44<?>,?> _44 = new Transformer<Tuple._44<?>,Object>() {
+        @Override
+        public final Object transform(fi.solita.utils.functional.Tuple._44<?> source) {
+            return source.get_44();
+        }
+    };
     
     @SuppressWarnings("unchecked")
     public static final <T> Transformer<Tuple._1<T>,T> _1() {
@@ -523,5 +848,81 @@ public abstract class Transformers {
     @SuppressWarnings("unchecked")
     public static final <T> Transformer<Tuple._25<T>,T> _25() {
         return (Transformer<Tuple._25<T>,T>)(Object)_25;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._26<T>,T> _26() {
+        return (Transformer<Tuple._26<T>,T>)(Object)_26;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._27<T>,T> _27() {
+        return (Transformer<Tuple._27<T>,T>)(Object)_27;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._28<T>,T> _28() {
+        return (Transformer<Tuple._28<T>,T>)(Object)_28;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._29<T>,T> _29() {
+        return (Transformer<Tuple._29<T>,T>)(Object)_29;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._30<T>,T> _30() {
+        return (Transformer<Tuple._30<T>,T>)(Object)_30;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._31<T>,T> _31() {
+        return (Transformer<Tuple._31<T>,T>)(Object)_31;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._32<T>,T> _32() {
+        return (Transformer<Tuple._32<T>,T>)(Object)_32;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._33<T>,T> _33() {
+        return (Transformer<Tuple._33<T>,T>)(Object)_33;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._34<T>,T> _34() {
+        return (Transformer<Tuple._34<T>,T>)(Object)_34;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._35<T>,T> _35() {
+        return (Transformer<Tuple._35<T>,T>)(Object)_35;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._36<T>,T> _36() {
+        return (Transformer<Tuple._36<T>,T>)(Object)_36;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._37<T>,T> _37() {
+        return (Transformer<Tuple._37<T>,T>)(Object)_37;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._38<T>,T> _38() {
+        return (Transformer<Tuple._38<T>,T>)(Object)_38;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._39<T>,T> _39() {
+        return (Transformer<Tuple._39<T>,T>)(Object)_39;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._40<T>,T> _40() {
+        return (Transformer<Tuple._40<T>,T>)(Object)_40;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._41<T>,T> _41() {
+        return (Transformer<Tuple._41<T>,T>)(Object)_41;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._42<T>,T> _42() {
+        return (Transformer<Tuple._42<T>,T>)(Object)_42;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._43<T>,T> _43() {
+        return (Transformer<Tuple._43<T>,T>)(Object)_43;
+    }
+    @SuppressWarnings("unchecked")
+    public static final <T> Transformer<Tuple._44<T>,T> _44() {
+        return (Transformer<Tuple._44<T>,T>)(Object)_44;
     }
 }

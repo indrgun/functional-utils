@@ -1,5 +1,5 @@
 package fi.solita.utils.functional;
-import static fi.solita.utils.functional.Collections.newList;
+import static fi.solita.utils.functional.Collections.newMutableList;
 import static fi.solita.utils.functional.Functional.map;
 
 import java.util.List;
@@ -28,8 +28,8 @@ public class TupleExamples {
         String valueByFieldAccess = tuple._2;
         
         Pair<Integer,String> pair = Pair.of(42, "right");
-        String right = pair.right;
-        int left = pair.left;
+        String right = pair.right();
+        int left = pair.left();
         
         Tuple2<String, Integer> appendedRight = Tuple.of("str").append(42);
         Tuple3<Boolean, String, Integer> prependedLeft = appendedRight.prepend(true);
@@ -38,7 +38,7 @@ public class TupleExamples {
         Tuple2<Integer,String> prefix2 = bigtuple.take2();
         Tuple3<Integer, String, Boolean> prefix3 = bigtuple.take3();
         
-        List<Pair<String,Integer>> listOfTuples = newList();
+        List<Pair<String,Integer>> listOfTuples = newMutableList();
         Iterable<Integer> projection = map(Transformers.<Integer>_2(), listOfTuples);
     }
 }
